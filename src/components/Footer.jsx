@@ -41,7 +41,7 @@ export default function Footer() {
         </div>
 
         <p className="footer-copyright">
-          © {year} Yousef <span>Mohsen</span>. All rights reserved.
+          © {year}<span> Yousef Mohsen</span>. All rights reserved.
         </p>
       </div>
     </footer>

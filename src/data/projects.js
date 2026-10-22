@@ -42,7 +42,7 @@ export const skills = {
 
 export const socialLinks = {
   github: 'https://github.com/YousefMohsen10',
-  linkedin: 'www.linkedin.com/in/yousef-mohsen100', // Replace with your LinkedIn URL when ready
+  linkedin: 'https://www.linkedin.com/in/yousef-mohsen100',
 };
 
 export const contactInfo = {
