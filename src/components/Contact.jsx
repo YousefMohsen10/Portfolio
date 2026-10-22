@@ -1,11 +1,18 @@
 import { useState } from 'react';
+import emailjs from '@emailjs/browser';
 import { Send, Mail, Github, Linkedin } from 'lucide-react';
 import { socialLinks, contactInfo } from '../data/projects';
+
+const emailJsConfig = {
+  serviceId: import.meta.env.VITE_EMAILJS_SERVICE_ID,
+  templateId: import.meta.env.VITE_EMAILJS_TEMPLATE_ID,
+  publicKey: import.meta.env.VITE_EMAILJS_PUBLIC_KEY,
+};
 
 export default function Contact() {
   const [form, setForm] = useState({ name: '', email: '', subject: '', message: '' });
   const [errors, setErrors] = useState({});
-  const [status, setStatus] = useState(null); // 'success' | 'error' | null
+  const [status, setStatus] = useState(null); // 'success' | 'error' | 'sending' | null
 
   const validate = () => {
     const newErrors = {};
@@ -33,7 +40,7 @@ export default function Contact() {
     }
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setStatus(null);
     const validation = validate();
@@ -43,12 +50,32 @@ export default function Contact() {
       return;
     }
     setErrors({});
-    // Open the user's default email client with the form data
-    const mailtoBody = `Name: ${form.name}\nEmail: ${form.email}\n\n${form.message}`;
-    const mailtoUrl = `mailto:${contactInfo.email}?subject=${encodeURIComponent(form.subject)}&body=${encodeURIComponent(mailtoBody)}`;
-    window.open(mailtoUrl, '_blank');
-    setStatus('success');
-    setForm({ name: '', email: '', subject: '', message: '' });
+
+    if (!emailJsConfig.serviceId || !emailJsConfig.templateId || !emailJsConfig.publicKey) {
+      setStatus('error');
+      return;
+    }
+
+    setStatus('sending');
+    try {
+      await emailjs.send(
+        emailJsConfig.serviceId,
+        emailJsConfig.templateId,
+        {
+          from_name: form.name,
+          from_email: form.email,
+          subject: form.subject,
+          message: form.message,
+          to_email: contactInfo.email,
+        },
+        { publicKey: emailJsConfig.publicKey },
+      );
+      setStatus('success');
+      setForm({ name: '', email: '', subject: '', message: '' });
+    } catch (error) {
+      console.error('EmailJS submission failed:', error);
+      setStatus('error');
+    }
   };
 
   return (
@@ -171,22 +198,27 @@ export default function Contact() {
             </div>
 
             <div className="form-submit">
-              <button type="submit" className="btn btn-primary">
-                Send Message
-                <Send size={18} />
+              <button type="submit" className="btn btn-primary" disabled={status === 'sending'}>
+                {status === 'sending' ? 'Sending...' : 'Send Message'}
+                {status !== 'sending' && <Send size={18} />}
               </button>
             </div>
 
             {status === 'success' && (
               <div className="form-message success">
-                Your email client has been opened with the message. Send it to
-                complete the delivery!
+                Your message has been sent successfully!
               </div>
             )}
 
             {status === 'error' && Object.keys(errors).length > 0 && (
               <div className="form-message error">
                 Please fill in all required fields correctly.
+              </div>
+            )}
+
+            {status === 'error' && Object.keys(errors).length === 0 && (
+              <div className="form-message error">
+                Your message could not be sent. Please try again later.
               </div>
             )}
           </form>
